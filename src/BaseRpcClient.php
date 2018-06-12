@@ -15,26 +15,27 @@ class BaseRpcClient
     public function __construct()
     {
         $this->connection = new AMQPStreamConnection(
-            'localhost',
-            5672,
-            'guest',
-            'guest'
+            config('rpc.mq_host'),
+            config('rpc.mq_port'),
+            config('rpc.mq_user'),
+            config('rpc.mq_password')
         );
         $this->channel = $this->connection->channel();
         list($this->callback_queue, ,) = $this->channel->queue_declare(
-            "",
-            false,  //被动
-            false,  //可持久化
-            true,   //专用的; 高级的; 排外的; 单独的
-            false   //自动删除
+            config('rpc.client.queue.queue'),       // "",
+            config('rpc.client.queue.passive'),     // false,  //被动
+            config('rpc.client.queue.durable'),     // false,  //可持久化
+            config('rpc.client.queue.exclusive'),   // true,   //专用的; 高级的; 排外的; 单独的
+            config('rpc.client.queue.auto_delete')  // false   //自动删除
         );
+//
         $this->channel->basic_consume(
             $this->callback_queue,
-            '', //消费者标记
-            false,
-            false,
-            false,
-            false,
+            config('rpc.client.consume.consumer_tag'),      // '', //消费者标记
+            config('rpc.client.consume.no_local'),          // false
+            config('rpc.client.consume.no_ack'),            // false
+            config('rpc.client.consume.exclusive'),         // false
+            config('rpc.client.consume.nowait'),            // false
             array(
                 $this,
                 'onResponse'
@@ -61,7 +62,11 @@ class BaseRpcClient
                 'reply_to' => $this->callback_queue
             )
         );
-        $this->channel->basic_publish($msg, '', 'rpc_queue');
+        $this->channel->basic_publish(
+            $msg,
+            config('rpc.client.public.exchange'),
+            config('rpc.client.public.routing_key')
+        );
         while (!$this->response) {
             $this->channel->wait();
         }

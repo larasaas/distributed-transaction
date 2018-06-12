@@ -11,10 +11,20 @@ class BaseRpcServer
 
     public function __construct()
     {
-        $connection = new AMQPStreamConnection('localhost', 5672, 'guest', 'guest');
+        $connection = new AMQPStreamConnection(
+            config('rpc.mq_host'),
+            config('rpc.mq_port'),
+            config('rpc.mq_user'),
+            config('rpc.mq_password')
+        );
         $channel = $connection->channel();
 
-        $channel->queue_declare('rpc_queue', false, false, false, false);
+        $channel->queue_declare(
+            config('rpc.server.queue.queue'),
+            config('rpc.server.queue.passive'),
+            config('rpc.server.queue.durable'),
+            config('rpc.server.queue.exclusive'),
+            config('rpc.server.queue.auto_delete'));
         $this->channel = $channel;
     }
 
@@ -40,8 +50,20 @@ class BaseRpcServer
             );
         };
 
-        $this->channel->basic_qos(null, 1, null);
-        $this->channel->basic_consume('rpc_queue', '', false, false, false, false, $callback);
+        $this->channel->basic_qos(
+            config('rpc.server.qos.perfetch_size'),
+            config('rpc.server.qos.perfetch_count'),
+            config('rpc.server.qos.a_global')
+        );
+        $this->channel->basic_consume(
+            config('rpc.server.consume.queue'),
+            config('rpc.server.consume.consumer_tag'),
+            config('rpc.server.consume.no_local'),
+            config('rpc.server.consume.no_ack'),
+            config('rpc.server.consume.exclusive'),
+            config('rpc.server.consume.nowait'),
+            $callback
+        );
 
         while (count($this->channel->callbacks)) {
             $this->channel->wait();

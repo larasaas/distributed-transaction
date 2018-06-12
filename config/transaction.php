@@ -52,6 +52,7 @@ return [
                 'auto_delete' => false, //自动删除
             ],
             'consume' => [
+                'queue' => 'rpc_queue',
                 'consumer_tag'=>'',     //消费者标记
                 'no_local'=>false,
                 'no_ack'=>false,
@@ -66,7 +67,7 @@ return [
         ],
         'client'=>[
             'queue' => [
-                'queue' => 'rpc_queue',
+                'queue' => '',
                 'passive' => false ,
                 'durable' => false ,
                 'exclusive'=> true,
@@ -79,6 +80,10 @@ return [
                 'exclusive'=>false,
                 'nowait'=>false
             ],
+            'publish'=>[
+                'exchange'=>'',
+                'routing_key'=>'rpc_queue'
+            ]
         ]
 
     ],
