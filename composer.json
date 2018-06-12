@@ -1,0 +1,55 @@
+{
+    "name": "larasaas/distributed-transaction",
+    "description": "基于RabbitMQ的分布式事务解决方案，支持RPC和最终一致性事务。",
+    "keywords": [
+        "larasaas",
+        "laravel",
+        "distributed transaction",
+        "transaction message"
+    ],
+    "homepage": "https://github.com/larasaas/distributed-transaction",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "ikodota",
+            "email": "ikodota@gmail.com",
+            "homepage": "http://www.cnblogs.com/ikodota",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php" : ">=7.0",
+        "illuminate/container": "~5.3.0|~5.4.0|~5.5.0",
+        "illuminate/contracts": "~5.3.0|~5.4.0|~5.5.0",
+        "illuminate/database": "~5.4.0|~5.5.0",
+        "php-amqplib/php-amqplib": "^2.7"
+    },
+    "require-dev": {
+        "monolog/monolog": "^1.22",
+        "orchestra/testbench": "~3.3.0|~3.4.2|~3.5.0",
+        "phpunit/phpunit" : "^5.7|6.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "larasaas\\DistributedTransaction\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "larasaas\\DistributedTransaction\\Test\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "phpunit"
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+            ]
+        }
+    }
+    
+}
