@@ -1,5 +1,5 @@
 <?php
-namespace App\Services;
+namespace larasaas\DistributedTransaction;
 
 //use Illuminate\Support\Facades\Log;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
@@ -14,9 +14,20 @@ class EmitTransaction
     protected $exchange;
     public function __construct()
     {
-        $this->connection = new AMQPStreamConnection('localhost', 5672, 'guest', 'guest');
+        $this->connection = new AMQPStreamConnection(
+            config('transaction.mq_host','localhost'),      // 'localhost',
+            config('transaction.mq_port',5672),      //  5672,
+            config('transaction.mq_user','guest'),      // 'guest',
+            config('transaction.mq_password','guest')   // 'guest'
+        );
         $channel = $this->connection->channel();
-        $this->exchange = $channel->exchange_declare('topic_logs', 'topic', false, false, false);
+        $this->exchange = $channel->exchange_declare(
+            config('transaction.receive.exchange.name','topic_message'),        // 'topic_message'
+            config('transaction.receive.exchange.type','topic'),        // 'topic'
+            config('transaction.receive.exchange.passive',false),     // false
+            config('transaction.receive.exchange.durable',false),     // false
+            config('transaction.receive.exchange.auto_delete',false)  // false
+        );
 //        $this->queue = $channel->queue_declare("", false, false, true, false);
         $this->channel = $channel;
 
@@ -53,7 +64,7 @@ class EmitTransaction
         $data=$message->body;
 
         $msg = new AMQPMessage($data);
-        $this->channel->basic_publish($msg, 'topic_logs', $routing_key);
+        $this->channel->basic_publish($msg, config('transaction.receive.exchange.name','topic_message'), $routing_key);
 
 //        echo ' [x] Sent ', $routing_key, ':', $data, "\n";
 

@@ -12,19 +12,19 @@ class BaseRpcServer
     public function __construct()
     {
         $connection = new AMQPStreamConnection(
-            config('rpc.mq_host'),
-            config('rpc.mq_port'),
-            config('rpc.mq_user'),
-            config('rpc.mq_password')
+            config('rpc.mq_host','localhost'),
+            config('rpc.mq_port','5672'),
+            config('rpc.mq_user','guest'),
+            config('rpc.mq_password','guest')
         );
         $channel = $connection->channel();
 
         $channel->queue_declare(
-            config('rpc.server.queue.queue'),
-            config('rpc.server.queue.passive'),
-            config('rpc.server.queue.durable'),
-            config('rpc.server.queue.exclusive'),
-            config('rpc.server.queue.auto_delete'));
+            config('rpc.server.queue.queue','rpc_queue'),
+            config('rpc.server.queue.passive',false),
+            config('rpc.server.queue.durable',false),
+            config('rpc.server.queue.exclusive',false),
+            config('rpc.server.queue.auto_delete'),false);
         $this->channel = $channel;
     }
 
@@ -51,17 +51,17 @@ class BaseRpcServer
         };
 
         $this->channel->basic_qos(
-            config('rpc.server.qos.perfetch_size'),
-            config('rpc.server.qos.perfetch_count'),
-            config('rpc.server.qos.a_global')
+            config('rpc.server.qos.perfetch_size',null),
+            config('rpc.server.qos.perfetch_count',1),
+            config('rpc.server.qos.a_global',null)
         );
         $this->channel->basic_consume(
-            config('rpc.server.consume.queue'),
-            config('rpc.server.consume.consumer_tag'),
-            config('rpc.server.consume.no_local'),
-            config('rpc.server.consume.no_ack'),
-            config('rpc.server.consume.exclusive'),
-            config('rpc.server.consume.nowait'),
+            config('rpc.server.consume.queue','rpc_queue'),
+            config('rpc.server.consume.consumer_tag',''),
+            config('rpc.server.consume.no_local',false),
+            config('rpc.server.consume.no_ack',false),
+            config('rpc.server.consume.exclusive',false),
+            config('rpc.server.consume.nowait',false),
             $callback
         );
 
