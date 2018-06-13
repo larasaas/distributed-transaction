@@ -2,6 +2,7 @@
 namespace larasaas\DistributedTransaction;
 
 //use Illuminate\Support\Facades\Log;
+use larasaas\DistributedTransaction\Models\Transaction;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
@@ -45,7 +46,7 @@ class EmitTransaction
             return ['error'=>1,'message'=>'事务消息体错误'];
         }
         $trans_data['message']=json_encode($message_data);
-        $message = \App\Models\Transaction::create($trans_data);
+        $message = Transaction::create($trans_data);
         if(! $message){
             return ['error'=>1,'message'=>'保存事务消息失败'];
         }
