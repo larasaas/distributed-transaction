@@ -31,12 +31,12 @@
     },
     "autoload": {
         "psr-4": {
-            "larasaas\\DistributedTransaction\\": "src"
+            "Larasaas\\DistributedTransaction\\": "src"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "larasaas\\DistributedTransaction\\Test\\": "tests"
+            "Larasaas\\DistributedTransaction\\Test\\": "tests"
         }
     },
     "scripts": {
