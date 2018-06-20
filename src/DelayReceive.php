@@ -1,12 +1,13 @@
 <?php
-namespace larasaas\DistributedTransaction;
+namespace Larasaas\DistributedTransaction;
 
+use Larasaas\DistributedTransaction\Models\TransApplied;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Helper\Protocol\Wait091;
 
 //define('AMQP_PROTOCOL','0.8');
-define('AMQP_DEBUG', true);
-class ReceiveTransaction
+//define('AMQP_DEBUG', true);
+class DelayReceive implements DtsServer
 {
 
     protected $connection;
@@ -17,26 +18,26 @@ class ReceiveTransaction
     public function __construct()
     {
         $this->connection = new AMQPStreamConnection(
-            config('transaction.mq_host','localhost'),      // 'localhost',
-            config('transaction.mq_port',5672),      //  5672,
-            config('transaction.mq_user','guest'),      // 'guest',
-            config('transaction.mq_password','guest')   // 'guest'
+            config('dts.delay.mq_host','localhost'),      // 'localhost',
+            config('dts.delay.mq_port',5672),      //  5672,
+            config('dts.delay.mq_user','guest'),      // 'guest',
+            config('dts.delay.mq_password','guest')   // 'guest'
         );
         $this->channel = $this->connection->channel();
 
         $this->queue = $this->channel->queue_declare(
-            config('transaction.receive.queue.queue',"trans"),      // ""
-            config('transaction.receive.queue.passive',false),    // false
-            config('transaction.receive.queue.durable',true),    // false
-            config('transaction.receive.queue.exclusive',false),  // true
-            config('transaction.receive.queue.auto_delete',false) // false
+            config('dts.delay.queue.queue',"delay_queue"),      // ""
+            config('dts.delay.queue.passive',false),    // false
+            config('dts.delay.queue.durable',true),    // false
+            config('dts.delay.queue.exclusive',false),  // true
+            config('dts.delay.queue.auto_delete',false) // false
         );
         $this->exchange = $this->channel->exchange_declare(
-            config('transaction.receive.exchange.name','topic_message'),        // 'topic_message'
-            config('transaction.receive.exchange.type','topic'),        // 'topic'
-            config('transaction.receive.exchange.passive',false),     // false
-            config('transaction.receive.exchange.durable',true),     // false
-            config('transaction.receive.exchange.auto_delete',false)  // false
+            config('dts.delay.exchange.name','delay_exchange'),        // 'topic_message'
+            config('dts.delay.exchange.type','topic'),        // 'topic'
+            config('dts.delay.exchange.passive',false),     // false
+            config('dts.delay.exchange.durable',true),     // false
+            config('dts.delay.exchange.auto_delete',false)  // false
 
         );
 //        $this->channel->queue_bind(config('transaction.receive.queue.queue',"trans"), config('transaction.receive.exchange.name','topic_message'),'myrouter');
@@ -48,8 +49,7 @@ class ReceiveTransaction
     {
         list($queue_name, ,) =$this->queue;
         $this->queue_name=$queue_name;
-        $this->channel->queue_bind($this->queue_name, config('transaction.receive.exchange.name','topic_message'), $binding_key);
-
+        $this->channel->queue_bind($this->queue_name, config('dts.confirm.exchange.name','topic_message'), $binding_key);
     }
 
 
@@ -70,7 +70,7 @@ class ReceiveTransaction
 ////            print_r($msg->delivery_info['delivery_tag']);die();
 //
             if($msg->body == 'good'){
-                $msg->delivery_info['channel']->basic_ack($delivery_tag,true);           //确认收到消息
+                $msg->delivery_info['channel']->basic_ack($delivery_tag,false);           //确认收到消息
             }else{
 //                sleep(10);
 //                $msg->delivery_info['channel']->basic_nack($delivery_tag,false,true);     //重新放入队列
@@ -89,28 +89,19 @@ class ReceiveTransaction
 //        $this->channel->basic_qos(null, 10000, null);       //限制消费的次数的多少
         $this->channel->basic_consume(
             $this->queue_name,
-            config('transaction.receive.consume.consumer_tag',""), // ""
-            config('transaction.receive.consume.no_local',false),     // false
-            config('transaction.receive.consume.no_ack',false),       // true       //这里采用ack应答确认模式，必须启用ack.
-            config('transaction.receive.consume.exclusive',false),    // false
-            config('transaction.receive.consume.nowait',false),       // false
+            config('dts.delay.consume.consumer_tag',""), // ""
+            config('dts.delay.consume.no_local',false),     // false
+            config('dts.delay.consume.no_ack',false),       // true       //这里采用ack应答确认模式，必须启用ack.
+            config('dts.delay.consume.exclusive',false),    // false
+            config('dts.delay.consume.nowait',false),       // false
             $process_message
         );
 
 //        $waitHelper = new Wait091();
 
         while (count($this->channel->callbacks)) {
-            //这里是主进程，需根据命令参数，开启对应的topic（每个topic代表一个最小单位的服务，主topic用*号）。
-            //根据callback回调函数来处理子方法。
-
-            //如果消费成功，则发送ack确认消息
-            //如果消费失败，则发送nack重新放入队列或删除消息
-
             //阻塞
             $this->channel->wait();
-//            $this->channel->wait(null, false, 0);
-//            $this->channel->wait(array($waitHelper->get_wait('basic.ack')));
-
             //非阻塞
 //            $read = array($this->connection->getSocket()); // add here other sockets that you need to attend
 //            $write = null;
@@ -123,6 +114,28 @@ class ReceiveTransaction
         }
     }
 
+
+    /**
+     * 添加消费记录
+     * @param array $app_data
+     * @return array
+     */
+    public function addApplied($app_data=[])
+    {
+        $find=TransApplied::where(['trans_id'=>$app_data['trans_id'],'consumer'=>$app_data['consumer'],'producer'=>$app_data['producer']])->first();
+        //查找是否被成功执行过，确保消费的信息不过界。
+        if(empty($find)){
+            $message = TransApplied::create($app_data);
+            if(! $message){
+                return ['error'=>1,'message'=>'保存事务消息失败'];
+            }
+            return ['error'=>0,'message'=>'ok','data'=>$message];
+        }else{
+            //容错
+            return ['error'=>0,'message'=>'ok','data'=>$find];
+            //return ['error'=>1,'message'=>'保存事务消息失败(重复)'];
+        }
+    }
 
     public function __destruct()
     {

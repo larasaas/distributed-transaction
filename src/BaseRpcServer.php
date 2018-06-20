@@ -1,6 +1,7 @@
 <?php
-namespace larasaas\DistributedTransaction;
+namespace Larasaas\DistributedTransaction;
 
+use Larasaas\DistributedTransaction\Models\TransApplied;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
@@ -8,6 +9,7 @@ class BaseRpcServer
 {
     protected $connection;
     protected $channel;
+    protected $exchange;
 
     public function __construct()
     {
@@ -26,6 +28,22 @@ class BaseRpcServer
             config('rpc.server.queue.exclusive',false),
             config('rpc.server.queue.auto_delete'),false);
         $this->channel = $channel;
+
+        $this->exchange = $this->channel->exchange_declare(
+            config('transaction.receive.exchange.name','rpc_exchange'),        // 'topic_message'
+            config('transaction.receive.exchange.type','topic'),        // 'topic'
+            config('transaction.receive.exchange.passive',true),     // false
+            config('transaction.receive.exchange.durable',false),     // false
+            config('transaction.receive.exchange.auto_delete',false)  // false
+
+        );
+    }
+
+    public function queue_bind($binding_key)
+    {
+//        list($queue_name, ,) =$this->queue;
+//        $this->queue_name=$queue_name;
+        $this->channel->queue_bind(config('rpc.server.queue.queue','rpc_queue'), config('transaction.receive.exchange.name','rpc_exchange'), $binding_key);
     }
 
     public function run()
@@ -51,17 +69,17 @@ class BaseRpcServer
         };
 
         $this->channel->basic_qos(
-            config('rpc.server.qos.perfetch_size',null),
-            config('rpc.server.qos.perfetch_count',1),
-            config('rpc.server.qos.a_global',null)
+            config('dts.rpc.qos.perfetch_size',null),
+            config('dts.rpc.qos.perfetch_count',1),
+            config('dts.rpc.qos.a_global',null)
         );
         $this->channel->basic_consume(
-            config('rpc.server.consume.queue','rpc_queue'),
-            config('rpc.server.consume.consumer_tag',''),
-            config('rpc.server.consume.no_local',false),
-            config('rpc.server.consume.no_ack',false),
-            config('rpc.server.consume.exclusive',false),
-            config('rpc.server.consume.nowait',false),
+            config('dts.rpc.consume.queue','rpc_queue'),
+            config('dts.rpc.consume.consumer_tag',''),
+            config('dts.rpc.consume.no_local',false),
+            config('dts.rpc.consume.no_ack',false),
+            config('dts.rpc.consume.exclusive',false),
+            config('dts.rpc.consume.nowait',false),
             $callback
         );
 
@@ -70,10 +88,33 @@ class BaseRpcServer
         }
     }
 
+
+    /**
+     * 添加消费记录
+     * @param array $app_data
+     * @return array
+     */
+    public function addApplied($app_data=[])
+    {
+        $find=TransApplied::where(['trans_id'=>$app_data['trans_id'],'consumer'=>$app_data['consumer'],'producer'=>$app_data['producer']])->first();
+        //查找是否被成功执行过，确保消费的信息不过界。
+        if(empty($find)){
+            $message = TransApplied::create($app_data);
+            if(! $message){
+                return ['error'=>1,'message'=>'保存事务消息失败'];
+            }
+            return ['error'=>0,'message'=>'ok','data'=>$message];
+        }else{
+            //容错
+            return ['error'=>0,'message'=>'ok','data'=>$find];
+            //return ['error'=>1,'message'=>'保存事务消息失败(重复)'];
+        }
+    }
+
     public function __destruct()
     {
-        $this->channel->close();
-        $this->connection->close();
+//        $this->channel->close();
+//        $this->connection->close();
 
     }
 

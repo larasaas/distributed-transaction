@@ -1,6 +1,6 @@
 <?php
 
-namespace larasaas\DistributedTransaction\Models;
+namespace Larasaas\DistributedTransaction\Models;
 
 use Illuminate\Database\Eloquent\Model;
 

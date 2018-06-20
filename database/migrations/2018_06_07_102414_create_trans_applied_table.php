@@ -17,8 +17,8 @@ class CreateTransAppliedTable extends Migration
             $table->bigIncrements('id');
             $table->unsignedInteger('tenant_id')->comment('影响的租户');
             $table->unsignedBigInteger('trans_id');
-            $table->string('consumer',20)->comment('消费者');
-            $table->json('data')->comment('应用明细');   //用于失败后（后置事务）撤销的依据（调用公共撤销事务）
+            $table->string('consumer',100)->comment('消费者');
+            $table->text('data')->comment('应用明细');   //用于失败后（后置事务）撤销的依据（调用公共撤销事务）
             $table->timestamps();
         });
     }
