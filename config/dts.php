@@ -28,19 +28,19 @@ return [
         //阶段2：“一起提交”。如果所有的Try成功，一起执行Confirm。否则，所有的执行Cancel.
     ],
     'confirm'=>[    //异步确保型（最终一致性）
-        'mq_host' => 'localhost',
-        'mq_port' => 5672,
-        'mq_user' => 'guest',
-        'mq_password' => 'guest',
+        'mq_host' => env('DTS_CONFIRM_MQ_HOST', 'localhost'),
+        'mq_port' => env('DTS_CONFIRM_MQ_PORT', 5672),
+        'mq_user' => env('DTS_CONFIRM_MQ_USER', 'guest'),
+        'mq_password' => env('DTS_CONFIRM_MQ_PASSPORT', 'guest'),
         'exchange' => [
-            'name'=>'confirm_exchange',
-            'type'=>'topic',    //topic,direct,fanout
+            'name'=>env('DTS_CONFIRM_EXCHANGE_NAME', 'confirm_exchange'),
+            'type'=>env('DTS_CONFIRM_EXCHANGE_TYPE', 'topic'),    //topic,direct,fanout
             'passive' => false ,
             'durable' => true ,
             'auto_delete' => false,
         ],
         'queue' => [
-            'queue' => 'confirm_queue',
+            'queue' => env('DTS_CONFIRM_QUEUE_NAME', 'confirm_queue'),
             'passive' => false ,
             'durable' => true ,
             'exclusive'=>false,
@@ -55,19 +55,19 @@ return [
         ]
     ],
     'delay'=>[  //最大努力通知型(阶梯延迟通知)
-        'mq_host' => 'localhost',
-        'mq_port' => 5672,
-        'mq_user' => 'guest',
-        'mq_password' => 'guest',
+        'mq_host' => env('DTS_DELAY_MQ_HOST', 'localhost'),
+        'mq_port' => env('DTS_DELAY_MQ_PORT', 5672),
+        'mq_user' => env('DTS_DELAY_MQ_USER', 'guest'),
+        'mq_password' => env('DTS_DELAY_MQ_PASSPORT', 'guest'),
         'exchange' => [
-            'name'=>'delay_exchange',
-            'type'=>'topic',
+            'name'=>env('DTS_DELAY_EXCHANGE_NAME', 'delay_exchange'),
+            'type'=>env('DTS_DELAY_EXCHANGE_TYPE', 'topic'),    //topic,direct,fanout
             'passive' => false ,
             'durable' => true ,
             'auto_delete' => false,
         ],
         'queue' => [
-            'queue' => 'delay_queue',
+            'queue' => env('DTS_DELAY_QUEUE_NAME', 'delay_queue'),
             'passive' => false ,
             'durable' => true ,
             'exclusive'=>false,
@@ -82,27 +82,26 @@ return [
         ]
     ],
     'rpc' => [  //远程过程调用
-        'mq_host' => 'localhost',
-        'mq_port' => 5672,
-        'mq_user' => 'guest',
-        'mq_password' => 'guest',
+        'mq_host' => env('DTS_RPC_MQ_HOST', 'localhost'),
+        'mq_port' => env('DTS_RPC_MQ_PORT', 5672),
+        'mq_user' => env('DTS_RPC_MQ_USER', 'guest'),
+        'mq_password' => env('DTS_RPC_MQ_PASSPORT', 'guest'),
         'exchange' => [
-            'name'=>'rpc_exchange',
-            'type'=>'topic',
+            'name'=>env('DTS_RPC_EXCHANGE_NAME', 'rpc_exchange'),
+            'type'=>env('DTS_RPC_EXCHANGE_TYPE', 'topic'),    //topic,direct,fanout
             'passive' => false ,
             'durable' => true ,
             'auto_delete' => false,
         ],
         'queue' => [
-            'queue' => 'rpc_queue',
-            'passive' => false ,    //被动
-            'durable' => true ,    //可持久化
-            'exclusive'=> false,    //专用的; 高级的; 排外的; 单独的
-            'auto_delete' => false, //自动删除
+            'queue' => env('DTS_RPC_QUEUE_NAME', 'rpc_queue'),
+            'passive' => false ,
+            'durable' => true ,
+            'exclusive'=>false,
+            'auto_delete' => false,
         ],
         'consume' => [
-            'queue' => 'rpc_queue',
-            'consumer_tag'=>'',     //消费者标记
+            'consumer_tag'=>'',
             'no_local'=>false,
             'no_ack'=>false,
             'exclusive'=>false,
@@ -115,7 +114,7 @@ return [
         ],
         'publish'=>[
             'exchange'=>'',
-            'routing_key'=>'rpc_queue'
+            'routing_key'=>env('DTS_RPC_QUEUE_NAME', 'rpc_queue')
         ]
 
     ]
