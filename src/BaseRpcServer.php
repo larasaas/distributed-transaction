@@ -14,27 +14,27 @@ class BaseRpcServer
     public function __construct()
     {
         $connection = new AMQPStreamConnection(
-            config('rpc.mq_host','localhost'),
-            config('rpc.mq_port','5672'),
-            config('rpc.mq_user','guest'),
-            config('rpc.mq_password','guest')
+            config('dts.rpc.mq_host','localhost'),
+            config('dts.rpc.mq_port','5672'),
+            config('dts.rpc.mq_user','guest'),
+            config('dts.rpc.mq_password','guest')
         );
         $channel = $connection->channel();
 
         $channel->queue_declare(
-            config('rpc.server.queue.queue','rpc_queue'),
-            config('rpc.server.queue.passive',false),
-            config('rpc.server.queue.durable',false),
-            config('rpc.server.queue.exclusive',false),
-            config('rpc.server.queue.auto_delete'),false);
+            config('dts.rpc.queue.queue','rpc_queue'),
+            config('dts.rpc.queue.passive',false),
+            config('dts.rpc.queue.durable',false),
+            config('dts.rpc.queue.exclusive',false),
+            config('dts.rpc.queue.auto_delete'),false);
         $this->channel = $channel;
 
         $this->exchange = $this->channel->exchange_declare(
-            config('transaction.receive.exchange.name','rpc_exchange'),        // 'topic_message'
-            config('transaction.receive.exchange.type','topic'),        // 'topic'
-            config('transaction.receive.exchange.passive',true),     // false
-            config('transaction.receive.exchange.durable',false),     // false
-            config('transaction.receive.exchange.auto_delete',false)  // false
+            config('dts.rpc.exchange.name','rpc_exchange'),        // 'topic_message'
+            config('dts.rpc.exchange.type','topic'),        // 'topic'
+            config('dts.rpc.exchange.passive',true),     // false
+            config('dts.rpc.exchange.durable',false),     // false
+            config('dts.rpc.exchange.auto_delete',false)  // false
 
         );
     }

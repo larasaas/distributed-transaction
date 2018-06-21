@@ -51,11 +51,5 @@
                 "Larasaas\\DistributedTransaction\\DtsServiceProvider"
             ]
         }
-    },
-    "repositories": {
-        "packagist": {
-            "type": "composer",
-            "url": "https://packagist.phpcomposer.com"
-        }
     }
 }
