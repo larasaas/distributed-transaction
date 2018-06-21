@@ -86,6 +86,13 @@ return [
         'mq_port' => 5672,
         'mq_user' => 'guest',
         'mq_password' => 'guest',
+        'exchange' => [
+            'name'=>'rpc_exchange',
+            'type'=>'topic',
+            'passive' => false ,
+            'durable' => true ,
+            'auto_delete' => false,
+        ],
         'queue' => [
             'queue' => 'rpc_queue',
             'passive' => false ,    //被动
