@@ -38,30 +38,6 @@ class DelayEmit implements DTS
 
         $this->channel = $this->connection->channel();
 
-        $this->channel->set_ack_handler(
-            function (AMQPMessage $message) {
-                echo "(".$message->delivery_info['delivery_tag'].")Message acked with content " . $message->body . PHP_EOL;
-            }
-        );
-
-        $this->channel->set_nack_handler(
-            function (AMQPMessage $message) {
-                echo "(".$message->delivery_info['delivery_tag'].")Message nacked with content " . $message->body . PHP_EOL;
-            }
-        );
-
-        //当exchange与queue未绑定时候，则会触发。
-        $this->channel->set_return_listener(
-            function ($replyCode, $replyText, $exchange, $routingKey, AMQPMessage $message) {
-//                echo "Message returned with content " . $message->body . PHP_EOL;
-                echo "return: ",
-                $replyCode, "\n",
-                $replyText, "\n",
-                $exchange, "\n",
-                $routingKey, "\n",
-                $message->body, "\n";
-            }
-        );
 
 //        $this->channel->tx_select();
         $this->channel->confirm_select();     //消息确认模式
@@ -83,6 +59,38 @@ class DelayEmit implements DTS
 //
     }
 
+
+    public function set_ack_handler(\Closure $closure){
+//        $closure = function (AMQPMessage $message) {
+//            echo "(".$message->delivery_info['delivery_tag'].")Message acked with content " . $message->body . PHP_EOL;
+//        };
+        $this->channel->set_ack_handler($closure);
+
+    }
+
+    public function set_nack_handler(\Closure $closure)
+    {
+//        $closure = function (AMQPMessage $message) {
+//            echo "(".$message->delivery_info['delivery_tag'].")Message nacked with content " . $message->body . PHP_EOL;
+//        };
+        $this->channel->set_nack_handler($closure);
+    }
+
+
+    public function set_return_listener(\Closure $closure)
+    {
+//        $closure = function ($replyCode, $replyText, $exchange, $routingKey, AMQPMessage $message) {
+////                echo "Message returned with content " . $message->body . PHP_EOL;
+//            echo "return: ",
+//            $replyCode, "\n",
+//            $replyText, "\n",
+//            $exchange, "\n",
+//            $routingKey, "\n",
+//            $message->body, "\n";
+//        };
+        //当exchange与queue未绑定时候，则会触发。
+        $this->channel->set_return_listener($closure);
+    }
 
     /**
      * 提交前，需要保存事务消息
@@ -111,7 +119,7 @@ class DelayEmit implements DTS
         if(isset($request->api_token) && !empty($request->api_token)){
             return $request->api_token;
         }
-        $authorization=$request()->header('authorization');
+        $authorization=$request->header('authorization');
         if( $authorization && substr($authorization,0,7)==='Bearer '){
             return substr($authorization,7);
         }

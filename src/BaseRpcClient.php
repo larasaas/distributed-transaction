@@ -104,7 +104,7 @@ class BaseRpcClient implements DTS
         if(isset($request->api_token) && !empty($request->api_token)){
             return $request->api_token;
         }
-        $authorization=$request()->header('authorization');
+        $authorization=$request->header('authorization');
         if( $authorization && substr($authorization,0,7)==='Bearer '){
             return substr($authorization,7);
         }
