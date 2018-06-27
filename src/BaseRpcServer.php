@@ -43,7 +43,7 @@ class BaseRpcServer
     {
 //        list($queue_name, ,) =$this->queue;
 //        $this->queue_name=$queue_name;
-        $this->channel->queue_bind(config('rpc.server.queue.queue','rpc_queue'), config('transaction.receive.exchange.name','rpc_exchange'), $binding_key);
+        $this->channel->queue_bind(config('dts.rpc.queue.queue','rpc_queue'), config('dts.rpc.exchange.name','rpc_exchange'), $binding_key);
     }
 
     public function run()
