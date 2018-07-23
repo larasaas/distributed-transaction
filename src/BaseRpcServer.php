@@ -113,8 +113,8 @@ class BaseRpcServer
 
     public function __destruct()
     {
-//        $this->channel->close();
-//        $this->connection->close();
+        $this->channel->close();
+        $this->connection->close();
 
     }
 

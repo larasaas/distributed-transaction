@@ -54,29 +54,6 @@ class BaseRpcClient implements DTS
         }
     }
 
-//    public function call($n)
-//    {
-//        $this->response = null;
-//        $this->corr_id = uniqid();
-//
-//        $msg = new AMQPMessage(
-//            (string) $n,
-//            array(
-//                'correlation_id' => $this->corr_id,
-//                'reply_to' => $this->callback_queue
-//            )
-//        );
-//        $this->channel->basic_publish(
-//            $msg,
-//            config('rpc.client.public.exchange',''),
-//            config('rpc.client.public.routing_key','rpc_queue')
-//        );
-//        while (!$this->response) {
-//            $this->channel->wait();
-//        }
-//        return intval($this->response);
-//
-//    }
     public function call()
     {
         $this->send_message();
@@ -87,7 +64,7 @@ class BaseRpcClient implements DTS
         if(empty($message_data)){
             return ['error'=>1,'message'=>'事务消息体错误','data'=>$message_data];
         }
-//        $trans_data['message']=$message_data;
+
         $message = Transaction::create($trans_data);
         $this->message = $message;
         if(! $message){
@@ -113,7 +90,7 @@ class BaseRpcClient implements DTS
 
 
 
-    public function send_message($prop = [])
+    public function send_message()
     {
 
         $message=$this->message;
@@ -139,7 +116,6 @@ class BaseRpcClient implements DTS
         $this->channel->basic_publish(
             $msg,
             config('dts.rpc.public.exchange','rpc_exchange'),
-//            config('rpc.client.public.routing_key','rpc_queue')
             $routing_key
         );
 
@@ -148,8 +124,6 @@ class BaseRpcClient implements DTS
 
 
         if(! $return) {
-//            Log::error('发送事务消息失败：');
-//            Log::error($message->toArray());
             return ['error'=>1,'message'=>'发送事务消息失败','data'=>$message];
         }
 
@@ -157,21 +131,9 @@ class BaseRpcClient implements DTS
             $this->channel->wait();
         }
 
-        print_r($this->response);
-
-
-//        $routing_key ='myrouter';
-//        $this->channel->basic_publish($msg, config('transaction.receive.exchange.name','topic_message'), $routing_key,false);
-//
-//        $this->channel->wait_for_pending_acks();  //不用等返回
-//        $this->channel->wait_for_pending_acks_returns();    //如果路由错误，则会触发set_return_listener.
-
+       return $this->response;
 
 
     }
 }
 
-//
-//$fibonacci_rpc = new FibonacciRpcClient();
-//$response = $fibonacci_rpc->call(30);
-//echo ' [.] Got ', $response, "\n";

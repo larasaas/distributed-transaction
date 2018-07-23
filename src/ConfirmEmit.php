@@ -140,19 +140,12 @@ class ConfirmEmit implements DTS
         $api_token=$this->getApiToken();
         $msg_body=$message->message;
         $trans_id=$message->id;
-
-//        list($queue_name, ,) =$this->queue;
-//        $this->queue_name=$queue_name;
-//        $this->channel->queue_bind($this->queue_name, config('transaction.receive.exchange.name','topic_message'), $routing_key);
-
-
         $msg = new AMQPMessage(json_encode([
             'api_token'=>$api_token,
             'producer'=>$producer,
             'msg_body'=>$msg_body,
             'trans_id'=>$trans_id
         ]),$props);
-//        $routing_key ='myrouter';
         $this->channel->basic_publish($msg, config('dts.confirm.exchange.name','confirm_exchange'), $routing_key,false);
 
         $this->channel->wait_for_pending_acks();  //不用等返回
@@ -161,30 +154,11 @@ class ConfirmEmit implements DTS
         $message->status=1;
         $return = $message->save();
         if(! $return) {
-//            Log::error('发送事务消息失败：');
-//            Log::error($message->toArray());
             return ['error'=>1,'message'=>'发送事务消息失败','data'=>$message];
         }
         return ['error'=>0,'message'=>'ok','data'=>$message];
     }
 
-
-//    /**
-//     * 本地事务提交失败后，向Message Queue请求取消事务消息
-//     * @param $message
-//     *
-//     */
-//    public function cancel_message($message)
-//    {
-//        $message->status=2;
-//        $return = $message->save();
-//        if(! $return) {
-////            Log::error('取消事务消息失败：');
-////            Log::error($message->toArray());
-//            return ['error'=>1,'message'=>'取消事务消息失败','data'=>$message];
-//        }
-//        return ['error'=>0,'message'=>'ok','data'=>$message];
-//    }
 
 
     public function __destruct()
