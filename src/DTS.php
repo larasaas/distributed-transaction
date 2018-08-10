@@ -13,5 +13,5 @@ interface DTS
 {
     public function save_message($trans_data);
 
-    public function send_message();
+    public function send_message($message,$props);
 }
