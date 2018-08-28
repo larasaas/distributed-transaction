@@ -5,7 +5,7 @@ use Larasaas\DistributedTransaction\Models\Transaction;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
-class BaseRpcClient implements DTS
+class BaseRpcClient
 {
     protected $connection;
     protected $channel;
