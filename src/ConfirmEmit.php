@@ -138,10 +138,12 @@ class ConfirmEmit implements DTS
         $producer = $message->producer; //生产者，需要验证
         $routing_key=$message->consumer;   //services.setting.brandcreator;消费者
         $api_token=$this->getApiToken();
+        $user_id=$message->user_id;
         $msg_body=$message->message;
         $trans_id=$message->id;
         $msg = new AMQPMessage(json_encode([
             'api_token'=>$api_token,
+            'user_id'=>$user_id,
             'producer'=>$producer,
             'msg_body'=>$msg_body,
             'trans_id'=>$trans_id
